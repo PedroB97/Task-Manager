@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Criar Novo Projeto</h2>
+    <form method="POST" action="{{ url_for("project_bp.create_project") }}">
+        <div class="mb-3">
+            <label for="name" class="form-label">Nome do Projeto</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Descrição</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Criar Projeto</button>
+        <a href="{{ url_for("project_bp.list_projects") }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+{% endblock %}
+

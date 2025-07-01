@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% from "_macros.html" import render_task_card %}
+
+{% block title %}Projeto: {{ project.name }}{% endblock %}
+
+{% block styles %}
+<style>
+    .kanban-board {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto; /* Allow horizontal scrolling if needed */
+        padding-bottom: 1rem; /* Add padding for scrollbar */
+    }
+    .kanban-column {
+        flex: 1;
+        min-width: 280px; /* Minimum width for columns */
+        max-width: 350px; /* Optional: Maximum width */
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        height: fit-content; /* Adjust height based on content */
+        max-height: 80vh; /* Limit maximum height */
+        overflow-y: auto; /* Allow vertical scrolling within column */
+    }
+    .kanban-column h4 {
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .task-card {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 0.8rem;
+        margin-bottom: 0.8rem;
+        cursor: grab;
+        transition: box-shadow 0.2s ease-in-out;
+    }
+    .task-card:hover {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .task-card h6 {
+        margin-bottom: 0.3rem;
+        font-size: 0.95rem;
+    }
+    .task-card p {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+        white-space: pre-wrap; /* Preserve line breaks */
+        word-wrap: break-word;
+    }
+    .task-meta {
+        font-size: 0.75rem;
+        color: #6c757d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+    }
+    .task-meta .due-date {
+        font-weight: bold;
+    }
+    .task-meta .assigned-user {
+        font-style: italic;
+    }
+    .task-actions a,
+    .task-actions button {
+        font-size: 0.75rem;
+        padding: 0.1rem 0.3rem;
+        margin-left: 0.2rem;
+    }
+    .dragging {
+        opacity: 0.5;
+        border: 2px dashed #0d6efd;
+    }
+    .drag-over {
+        background-color: #e9ecef;
+        border: 2px dashed #adb5bd;
+    }
+    .add-task-btn {
+        font-size: 1rem;
+        padding: 0.2rem 0.5rem;
+        line-height: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4"> {# Use container-fluid for wider layout #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>{{ project.name }}</h2>
+            <p class="text-muted">{{ project.description }}</p>
+        </div>
+        <div>
+            {# Botões de ação do projeto (se necessário) #}
+            {# <a href="{{ url_for("project_bp.edit_project", project_id=project.id) }}" class="btn btn-sm btn-outline-secondary">Editar Projeto</a> #}
+        </div>
+    </div>
+    <hr>
+
+    <div class="kanban-board">
+        {% set columns = {
+            "a_fazer": "A Fazer",
+            "em_andamento": "Em Andamento",
+            "finalizada": "Finalizada"
+        } %}
+
+        {% for status_key, status_name in columns.items() %}
+        <div class="kanban-column" id="column-{{ status_key }}" data-status="{{ status_key }}">
+            <h4>
+                {{ status_name }}
+                <a href="{{ url_for("task_bp.create_task", project_id=project.id) }}?status={{ status_key }}" class="btn btn-sm btn-primary add-task-btn">+</a>
+            </h4>
+            <div class="tasks-container task-list-container">
+                {% set tasks_in_column = project.tasks | selectattr("status", "equalto", status_key) | list | sort(attribute="position") %}
+                {% if tasks_in_column %}
+                    {% for task in tasks_in_column %}
+                        {{ render_task_card(task) }} {# Usar macro para renderizar card #}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted small">Nenhuma tarefa nesta coluna.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const tasks = document.querySelectorAll(".task-card");
+        const columns = document.querySelectorAll(".kanban-column .tasks-container");
+
+        tasks.forEach(task => {
+            task.addEventListener("dragstart", () => {
+                task.classList.add("dragging");
+            });
+
+            task.addEventListener("dragend", () => {
+                task.classList.remove("dragging");
+            });
+        });
+
+        columns.forEach(column => {
+            column.addEventListener("dragover", e => {
+                e.preventDefault();
+                const draggingTask = document.querySelector(".dragging");
+                if (draggingTask && column !== draggingTask.parentElement) {
+                    column.classList.add("drag-over");
+                    // Lógica para determinar a posição de inserção (opcional)
+                    // const afterElement = getDragAfterElement(column, e.clientY);
+                    // if (afterElement == null) {
+                    //     column.appendChild(draggingTask);
+                    // } else {
+                    //     column.insertBefore(draggingTask, afterElement);
+                    // }
+                }
+            });
+
+            column.addEventListener("dragleave", () => {
+                 column.classList.remove("drag-over");
+            });
+
+            column.addEventListener("drop", e => {
+                e.preventDefault();
+                column.classList.remove("drag-over");
+                const draggingTask = document.querySelector(".dragging");
+                if (draggingTask) {
+                    const targetColumnElement = column.closest(".kanban-column");
+                    const newStatus = targetColumnElement.dataset.status;
+                    const taskId = draggingTask.dataset.taskId;
+
+                    // Determinar a nova posição
+                    const tasksInColumn = Array.from(column.querySelectorAll(".task-card:not(.dragging)"));
+                    const afterElement = getDragAfterElement(column, e.clientY);
+                    let newPosition = 0;
+                    if (afterElement) {
+                        const afterElementIndex = tasksInColumn.findIndex(t => t === afterElement);
+                        newPosition = afterElementIndex; // Posição é o índice do elemento seguinte
+                    } else {
+                        newPosition = tasksInColumn.length; // Colocar no final
+                    }
+
+                    // Adicionar visualmente à nova coluna na posição correta
+                    if (afterElement == null) {
+                        column.appendChild(draggingTask);
+                    } else {
+                        column.insertBefore(draggingTask, afterElement);
+                    }
+
+                    // Atualizar o status e posição no backend
+                    updateTaskStatus(taskId, newStatus, newPosition);
+
+                    // Reordenar posições no backend para a coluna de origem (se necessário)
+                    // updatePositionsInColumn(draggingTask.closest(".kanban-column").id);
+
+                    // Reordenar posições no backend para a coluna de destino
+                    updatePositionsInColumn(targetColumnElement.id);
+                }
+            });
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll(".task-card:not(.dragging)")];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateTaskStatus(taskId, newStatus, newPosition) {
+            fetch(`/tasks/${taskId}/update_status`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    // Adicionar CSRF token se necessário
+                },
+                body: JSON.stringify({ status: newStatus, position: newPosition })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Task status updated:", data.message);
+                // Opcional: mostrar feedback ao usuário
+            })
+            .catch(error => {
+                console.error("Error updating task status:", error);
+                // Opcional: reverter a mudança visual ou mostrar erro
+            });
+        }
+
+        function updatePositionsInColumn(columnId) {
+            const columnElement = document.getElementById(columnId);
+            if (!columnElement) return;
+            const tasks = columnElement.querySelectorAll(".task-card");
+            tasks.forEach((task, index) => {
+                const taskId = task.dataset.taskId;
+                // Opcional: enviar atualização de posição para cada tarefa se a ordem mudou
+                // fetch(`/tasks/${taskId}/update_position`, { ... body: JSON.stringify({ position: index }) ... });
+                console.log(`Task ${taskId} in ${columnId} is now at position ${index}`);
+            });
+        }
+
+    });
+</script>
+{% endblock %}
+

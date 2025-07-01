@@ -1,0 +1,33 @@
+{# Macros para reutilização de componentes HTML #}
+
+{# Macro para renderizar um cartão de tarefa no quadro Kanban #}
+{% macro render_task_card(task) %}
+<div class="task-card" draggable="true" data-task-id="{{ task.id }}">
+    <h6>{{ task.title }}</h6>
+    {% if task.description %}
+        <p>{{ task.description | truncate(80, True) }}</p> {# Limitar descrição no card #}
+    {% endif %}
+    <div class="task-meta">
+        <span>
+            {% if task.due_date %}
+                <span class="due-date">Vence: {{ task.due_date.strftime("%d/%m") }}</span>
+            {% endif %}
+        </span>
+        {# Exibir usuário atribuído #}
+        <span class="assigned-user">
+            {% if task.assigned_user %}
+                <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+            {% else %}
+                <i class="fas fa-user-slash text-muted"></i> <span class="text-muted">N/A</span>
+            {% endif %}
+        </span>
+    </div>
+    <div class="task-actions text-end mt-2">
+        <a href="{{ url_for("task_bp.edit_task", task_id=task.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar Tarefa"><i class="fas fa-edit"></i></a>
+        <form action="{{ url_for("task_bp.delete_task", task_id=task.id) }}" method="POST" class="d-inline" onsubmit="return confirm("Tem certeza que deseja excluir esta tarefa?");">
+             <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir Tarefa"><i class="fas fa-trash-alt"></i></button>
+        </form>
+    </div>
+</div>
+{% endmacro %}
+

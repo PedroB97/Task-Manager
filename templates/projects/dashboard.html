@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>Dashboard - {{ project.name }}</h1>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('project_bp.view_project', project_id=project.id) }}" class="btn btn-primary">
+            Voltar para o Quadro
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Resumo de tarefas -->
+    <div class="col-md-4">
+        <div class="dashboard-card">
+            <h3>Resumo de Tarefas</h3>
+            <div class="list-group">
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    A Fazer
+                    <span class="badge bg-primary rounded-pill">{{ tasks_count.a_fazer }}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    Em Andamento
+                    <span class="badge bg-warning rounded-pill">{{ tasks_count.em_andamento }}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    Finalizadas
+                    <span class="badge bg-success rounded-pill">{{ tasks_count.finalizada }}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <strong>Total</strong>
+                    <span class="badge bg-dark rounded-pill">{{ tasks_count.a_fazer + tasks_count.em_andamento + tasks_count.finalizada }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico de distribuição de tarefas -->
+    <div class="col-md-8">
+        <div class="dashboard-card">
+            <h3>Distribuição de Tarefas</h3>
+            <div class="chart-container">
+                <canvas id="tasks-chart" data-project-id="{{ project.id }}"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Indicador de progresso -->
+    <div class="col-md-12">
+        <div class="dashboard-card">
+            <h3>Progresso do Projeto</h3>
+            {% set total = tasks_count.a_fazer + tasks_count.em_andamento + tasks_count.finalizada %}
+            {% if total > 0 %}
+                {% set percent_complete = (tasks_count.finalizada / total * 100) | round %}
+            {% else %}
+                {% set percent_complete = 0 %}
+            {% endif %}
+            
+            <div class="progress" style="height: 30px;">
+                <div class="progress-bar bg-success" role="progressbar" 
+                     style="width: {{ percent_complete }}%;" 
+                     aria-valuenow="{{ percent_complete }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ percent_complete }}%
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <small>{{ tasks_count.finalizada }} de {{ total }} tarefas concluídas</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
