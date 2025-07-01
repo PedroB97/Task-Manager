@@ -4,18 +4,20 @@ from flask_login import login_required, current_user
 from forms import CreateUserForm, UserForm, UpdateUserPasswordForm
 from models.models import User
 from __init__ import db
+import functools
 
 user_bp = Blueprint('user_bp', __name__, url_prefix='/users')
 
 # Decorador para exigir que o usuário seja administrador
 def admin_required(f):
+    @functools.wraps(f)  # Preserva os metadados da função original
     @login_required
-    def wrapper(*args, **kwargs):
+    def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
             flash('Você não tem permissão para acessar esta página.', 'danger')
             return redirect(url_for('project_bp.list_projects'))
         return f(*args, **kwargs)
-    return wrapper
+    return decorated_function
 
 # Esta linha é a chave: define o nome do endpoint explicitamente
 # para que o Flask possa encontrá-lo quando chamado de outros blueprints
@@ -52,7 +54,7 @@ def view_user(user_id):
 @admin_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
-    form = UserForm(obj=user)
+    form = UserForm(original_user=user, obj=user)
     if form.validate_on_submit():
         user.username = form.username.data
         user.email = form.email.data
