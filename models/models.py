@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from .. import db
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# Importar db do __init__.py principal
+from __init__ import db
 
 # Modelo de Usuário (Existente)
 class User(UserMixin, db.Model):
@@ -51,14 +54,9 @@ class Task(db.Model):
     status = db.Column(db.String(20), default='a_fazer')  # a_fazer, em_andamento, finalizada
     due_date = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    position = db.Column(db.Integer, default=0)  # Para ordenação no quadro Kanban
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
-    # Campo para armazenar o ID do usuário responsável (adicionado)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Permitir tarefas não atribuídas
-    attachments = db.relationship('Attachment', backref='task', lazy=True, cascade="all, delete-orphan")
-    # Relacionamento para acessar o objeto User diretamente (adicionado)
-    # assigned_user definido pelo backref em User.assigned_tasks
+    # Novo campo para atribuição de usuário
+    assigned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
     def __repr__(self):
         return f'<Task {self.title}>'
@@ -71,24 +69,25 @@ class Task(db.Model):
             'status': self.status,
             'due_date': self.due_date.strftime('%Y-%m-%d') if self.due_date else None,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'position': self.position,
             'project_id': self.project_id,
-            # Adicionar ID e nome do usuário atribuído ao dicionário
-            'assigned_user_id': self.user_id,
-            'assigned_username': self.assigned_user.username if self.assigned_user else None
+            'assigned_user_id': self.assigned_user_id
         }
 
-# Modelo de Anexo (Existente)
+# Modelo de Anexo (Novo)
 class Attachment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(100), nullable=False)
-    original_filename = db.Column(db.String(100), nullable=False)
-    file_path = db.Column(db.String(255), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
     file_size = db.Column(db.Integer, nullable=False)
-    file_type = db.Column(db.String(50), nullable=False)
+    mime_type = db.Column(db.String(100), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # Relacionamentos
+    task = db.relationship('Task', backref=db.backref('attachments', lazy=True, cascade="all, delete-orphan"))
+    uploaded_by = db.relationship('User', backref=db.backref('uploaded_attachments', lazy=True))
 
     def __repr__(self):
         return f'<Attachment {self.original_filename}>'
@@ -99,8 +98,9 @@ class Attachment(db.Model):
             'filename': self.filename,
             'original_filename': self.original_filename,
             'file_size': self.file_size,
-            'file_type': self.file_type,
+            'mime_type': self.mime_type,
             'uploaded_at': self.uploaded_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'task_id': self.task_id
+            'task_id': self.task_id,
+            'uploaded_by_id': self.uploaded_by_id
         }
 
