@@ -60,3 +60,56 @@ class TaskForm(FlaskForm):
     )
     submit = SubmitField("Salvar Tarefa")
 
+# Formulários para gerenciamento de usuários
+class CreateUserForm(FlaskForm):
+    username = StringField("Nome de Usuário",
+                           validators=[DataRequired(), Length(min=2, max=20)])
+    email = StringField("Email",
+                        validators=[DataRequired(), Email()])
+    password = PasswordField("Senha", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField("Confirmar Senha",
+                                     validators=[DataRequired(), EqualTo("password", message="As senhas devem ser iguais.")])
+    is_admin = BooleanField("Administrador")
+    submit = SubmitField("Criar Usuário")
+
+    # Validações customizadas
+    def validate_username(self, username):
+         user = User.query.filter_by(username=username.data).first()
+         if user:
+             raise ValidationError("Este nome de usuário já está em uso. Escolha outro.")
+
+    def validate_email(self, email):
+         user = User.query.filter_by(email=email.data).first()
+         if user:
+             raise ValidationError("Este email já está em uso. Escolha outro.")
+
+class UserForm(FlaskForm):
+    username = StringField("Nome de Usuário",
+                           validators=[DataRequired(), Length(min=2, max=20)])
+    email = StringField("Email",
+                        validators=[DataRequired(), Email()])
+    is_admin = BooleanField("Administrador")
+    submit = SubmitField("Atualizar Usuário")
+
+    def __init__(self, original_user=None, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        self.original_user = original_user
+
+    def validate_username(self, username):
+        if self.original_user and username.data != self.original_user.username:
+            user = User.query.filter_by(username=username.data).first()
+            if user:
+                raise ValidationError("Este nome de usuário já está em uso. Escolha outro.")
+
+    def validate_email(self, email):
+        if self.original_user and email.data != self.original_user.email:
+            user = User.query.filter_by(email=email.data).first()
+            if user:
+                raise ValidationError("Este email já está em uso. Escolha outro.")
+
+class UpdateUserPasswordForm(FlaskForm):
+    password = PasswordField("Nova Senha", validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField("Confirmar Nova Senha",
+                                     validators=[DataRequired(), EqualTo("password", message="As senhas devem ser iguais.")])
+    submit = SubmitField("Alterar Senha")
+
