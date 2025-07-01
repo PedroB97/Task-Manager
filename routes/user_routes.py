@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
-
-from src.forms import CreateUserForm, UserForm, UpdateUserPasswordForm
-from src.models.models import User
-from src import db
+from forms import CreateUserForm, UserForm, UpdateUserPasswordForm
+from models.models import User
+from __init__ import db
 
 user_bp = Blueprint('user_bp', __name__, url_prefix='/users')
 
@@ -16,83 +15,80 @@ def admin_required(f):
             flash('Você não tem permissão para acessar esta página.', 'danger')
             return redirect(url_for('project_bp.list_projects'))
         return f(*args, **kwargs)
-
-    # Esta linha é a chave: define o nome do endpoint explicitamente
-    # para o nome da função original.
-    wrapper.__name__ = f.__name__
-    wrapper.__module__ = f.__module__
-    wrapper.__doc__ = f.__doc__
-    wrapper.__qualname__ = f.__qualname__ # Adicionado para compatibilidade
-
     return wrapper
 
+# Esta linha é a chave: define o nome do endpoint explicitamente
+# para que o Flask possa encontrá-lo quando chamado de outros blueprints
 @user_bp.route('/')
 @admin_required
 def list_users():
     users = User.query.all()
-    return render_template('users/list_users.html', users=users, title="Gerenciar Usuários")
+    return render_template('users/list.html', users=users)
 
-@user_bp.route('/create', methods=['GET', 'POST'])
+@user_bp.route('/new', methods=['GET', 'POST'])
 @admin_required
 def create_user():
     form = CreateUserForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data,
-                    email=form.email.data,
-                    is_admin=form.is_admin.data)
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            is_admin=form.is_admin.data
+        )
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Usuário criado com sucesso!', 'success')
+        flash(f'Usuário {user.username} criado com sucesso!', 'success')
         return redirect(url_for('user_bp.list_users'))
-    return render_template('users/create_user.html', form=form, title="Criar Novo Usuário")
+    return render_template('users/new.html', form=form)
+
+@user_bp.route('/<int:user_id>')
+@admin_required
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('users/view.html', user=user)
 
 @user_bp.route('/<int:user_id>/edit', methods=['GET', 'POST'])
 @admin_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
-    form = UserForm(original_username=user.username, original_email=user.email)
-    password_form = UpdateUserPasswordForm()
-
+    form = UserForm(obj=user)
     if form.validate_on_submit():
         user.username = form.username.data
         user.email = form.email.data
         user.is_admin = form.is_admin.data
         db.session.commit()
-        flash('Usuário atualizado com sucesso!', 'success')
-        return redirect(url_for('user_bp.list_users'))
-    elif request.method == 'GET':
-        form.username.data = user.username
-        form.email.data = user.email
-        form.is_admin.data = user.is_admin
+        flash(f'Usuário {user.username} atualizado com sucesso!', 'success')
+        return redirect(url_for('user_bp.view_user', user_id=user.id))
+    return render_template('users/edit.html', form=form, user=user)
 
-    return render_template('users/edit_user.html', form=form, password_form=password_form, user=user, title=f"Editar Usuário: {user.username}")
-
-@user_bp.route('/<int:user_id>/change_password', methods=['POST'])
+@user_bp.route('/<int:user_id>/change-password', methods=['GET', 'POST'])
 @admin_required
 def change_user_password(user_id):
     user = User.query.get_or_404(user_id)
-    password_form = UpdateUserPasswordForm()
-    if password_form.validate_on_submit():
-        user.set_password(password_form.password.data)
+    form = UpdateUserPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
         db.session.commit()
-        flash('Senha do usuário alterada com sucesso!', 'success')
-    else:
-        for field, errors in password_form.errors.items():
-            for error in errors:
-                flash(f'Erro na senha: {error}', 'danger')
-    return redirect(url_for('user_bp.edit_user', user_id=user.id))
-
+        flash(f'Senha do usuário {user.username} alterada com sucesso!', 'success')
+        return redirect(url_for('user_bp.view_user', user_id=user.id))
+    return render_template('users/change_password.html', form=form, user=user)
 
 @user_bp.route('/<int:user_id>/delete', methods=['POST'])
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
+    
+    # Não permitir deletar o próprio usuário
     if user.id == current_user.id:
-        flash('Você não pode excluir seu próprio usuário!', 'danger')
+        flash('Você não pode deletar sua própria conta!', 'danger')
         return redirect(url_for('user_bp.list_users'))
-
+    
+    # TODO: Verificar se o usuário tem tarefas atribuídas e lidar com isso
+    # Por enquanto, vamos apenas deletar
+    username = user.username
     db.session.delete(user)
     db.session.commit()
-    flash('Usuário excluído com sucesso!', 'success')
+    flash(f'Usuário {username} deletado com sucesso!', 'success')
     return redirect(url_for('user_bp.list_users'))
+
