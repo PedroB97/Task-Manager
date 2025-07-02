@@ -2,6 +2,7 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Estilos para o quadro Kanban */
@@ -18,6 +19,7 @@ body {
     min-width: 300px;
     max-width: 300px;
     padding: 10px;
+    transition: background-color 0.3s ease;
 }
 
 .kanban-column-header {
@@ -28,6 +30,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: border-color 0.3s ease;
 }
 
 .kanban-column-header.a-fazer {
@@ -53,6 +56,8 @@ body {
     margin-bottom: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     cursor: grab;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+    color: #212529;
 }
 
 .task-card:hover {
@@ -62,11 +67,13 @@ body {
 .task-card .task-title {
     font-weight: 500;
     margin-bottom: 5px;
+    color: inherit;
 }
 
 .task-card .task-due-date {
     font-size: 0.8rem;
     color: #6c757d;
+    transition: color 0.3s ease;
 }
 
 .task-card .task-actions {
@@ -82,11 +89,13 @@ body {
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .dashboard-card h3 {
     margin-bottom: 15px;
     color: #495057;
+    transition: color 0.3s ease;
 }
 
 .chart-container {
@@ -103,6 +112,7 @@ body {
     align-items: center;
     padding: 8px;
     border-bottom: 1px solid #e9ecef;
+    transition: border-color 0.3s ease;
 }
 
 .attachment-item:last-child {
@@ -112,15 +122,180 @@ body {
 .attachment-icon {
     margin-right: 10px;
     color: #6c757d;
+    transition: color 0.3s ease;
 }
 
 .attachment-name {
     flex-grow: 1;
+    transition: color 0.3s ease;
 }
 
 .attachment-actions {
     display: flex;
     gap: 5px;
+}
+
+/* ===== MODO ESCURO ===== */
+body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e9ecef;
+}
+
+/* Kanban no modo escuro */
+body.dark-mode .kanban-column {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+}
+
+body.dark-mode .kanban-column-header {
+    border-bottom-color: #4a5568;
+    color: #e9ecef;
+}
+
+/* Cores dos headers mantidas mais vibrantes no modo escuro */
+body.dark-mode .kanban-column-header.a-fazer {
+    color: #4dabf7;
+}
+
+body.dark-mode .kanban-column-header.em-andamento {
+    color: #ffa94d;
+}
+
+body.dark-mode .kanban-column-header.finalizada {
+    color: #51cf66;
+}
+
+/* Cards de tarefa no modo escuro */
+body.dark-mode .task-card {
+    background-color: #374151;
+    color: #f3f4f6;
+    border: 1px solid #4b5563;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .task-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    background-color: #4b5563;
+}
+
+body.dark-mode .task-card .task-title {
+    color: #f9fafb;
+}
+
+body.dark-mode .task-card .task-due-date {
+    color: #d1d5db;
+}
+
+/* Dashboard no modo escuro */
+body.dark-mode .dashboard-card {
+    background-color: #374151;
+    color: #f3f4f6;
+    border: 1px solid #4b5563;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .dashboard-card h3 {
+    color: #f9fafb;
+}
+
+/* Anexos no modo escuro */
+body.dark-mode .attachment-item {
+    border-bottom-color: #4b5563;
+    color: #f3f4f6;
+}
+
+body.dark-mode .attachment-icon {
+    color: #d1d5db;
+}
+
+body.dark-mode .attachment-name {
+    color: #f3f4f6;
+}
+
+/* Cards Bootstrap no modo escuro */
+body.dark-mode .card {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+body.dark-mode .card-header {
+    background-color: #4b5563;
+    border-bottom-color: #6b7280;
+    color: #f9fafb;
+}
+
+body.dark-mode .card-body {
+    color: #f3f4f6;
+}
+
+/* Texto geral no modo escuro */
+body.dark-mode .text-muted {
+    color: #d1d5db !important;
+}
+
+body.dark-mode .text-secondary {
+    color: #d1d5db !important;
+}
+
+/* Formulários no modo escuro */
+body.dark-mode .form-control {
+    background-color: #4b5563;
+    border-color: #6b7280;
+    color: #f9fafb;
+}
+
+body.dark-mode .form-control:focus {
+    background-color: #4b5563;
+    border-color: #3b82f6;
+    color: #f9fafb;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+body.dark-mode .form-label {
+    color: #f3f4f6;
+}
+
+/* Tabelas no modo escuro */
+body.dark-mode .table {
+    color: #f3f4f6;
+}
+
+body.dark-mode .table-dark {
+    background-color: #1f2937;
+}
+
+body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > td {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Alertas no modo escuro */
+body.dark-mode .alert {
+    border-color: #4b5563;
+}
+
+body.dark-mode .alert-success {
+    background-color: #065f46;
+    border-color: #047857;
+    color: #d1fae5;
+}
+
+body.dark-mode .alert-danger {
+    background-color: #7f1d1d;
+    border-color: #991b1b;
+    color: #fecaca;
+}
+
+body.dark-mode .alert-warning {
+    background-color: #78350f;
+    border-color: #92400e;
+    color: #fde68a;
+}
+
+body.dark-mode .alert-info {
+    background-color: #1e3a8a;
+    border-color: #1d4ed8;
+    color: #dbeafe;
 }
 
 /* Responsividade */
@@ -135,3 +310,4 @@ body {
         max-width: 100%;
     }
 }
+
