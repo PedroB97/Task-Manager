@@ -168,8 +168,9 @@
                             <i class="fas fa-project-diagram"></i> Ver Projeto
                         </a>
                         {% else %}
-                        <a href="#" class="btn btn-secondary disabled">
-                            <i class="fas fa-project-diagram"></i> Ver Projeto (N/A)
+                        <a href="{{ url_for('project_bp.list_projects') }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-project-diagram"></i> Ver Projetos
                         </a>
                         {% endif %}
 
@@ -214,6 +215,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-chart-line"></i> Progresso
+                    
                     </h6>
                 </div>
                 <div class="card-body">
