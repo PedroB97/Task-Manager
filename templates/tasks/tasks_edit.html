@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Tarefa: {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> Editar Tarefa
+                    </h4>
+                    <small class="text-muted">{{ task.title }} - Projeto: {{ task.project.name }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }}
+                                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                    {% if form.title.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.title.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.status.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.due_date.label(class="form-label") }}
+                                    {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else "")) }}
+                                    {% if form.due_date.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.due_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.assigned_user.label(class="form-label") }}
+                                    {{ form.assigned_user(class="form-select" + (" is-invalid" if form.assigned_user.errors else "")) }}
+                                    {% if form.assigned_user.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.assigned_user.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.attachment.label(class="form-label") }}
+                            {{ form.attachment(class="form-control" + (" is-invalid" if form.attachment.errors else "")) }}
+                            {% if form.attachment.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.attachment.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> 
+                                Selecione um novo arquivo apenas se quiser substituir o anexo atual.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Voltar ao Projeto
+                                </a>
+                            </div>
+                            <div>
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informações da tarefa -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Informações da Tarefa
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>ID:</strong> #{{ task.id }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Status Atual:</strong> 
+                            {% if task.status == 'a_fazer' %}
+                                <span class="badge bg-primary">A Fazer</span>
+                            {% elif task.status == 'em_andamento' %}
+                                <span class="badge bg-warning">Em Andamento</span>
+                            {% elif task.status == 'finalizada' %}
+                                <span class="badge bg-success">Finalizada</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Projeto:</strong> {{ task.project.name }}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Responsável:</strong> 
+                            {% if task.assigned_user %}
+                                {{ task.assigned_user.username }}
+                            {% else %}
+                                <span class="text-muted">Não atribuído</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Prazo:</strong> 
+                            {% if task.due_date %}
+                                {{ task.due_date.strftime('%d/%m/%Y') }}
+                                {% if task.due_date < moment().date() %}
+                                    <span class="badge bg-danger ms-1">Atrasada</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Sem prazo definido</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anexos existentes -->
+            {% if task.attachments %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-paperclip"></i> Anexos Existentes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="attachments-list">
+                        {% for attachment in task.attachments %}
+                        <div class="attachment-item">
+                            <div class="attachment-icon">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <div class="attachment-name">
+                                {{ attachment.filename }}
+                            </div>
+                            <div class="attachment-actions">
+                                <a href="{{ url_for('attachment_bp.download_attachment', attachment_id=attachment.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <form method="POST" 
+                                      action="{{ url_for('attachment_bp.delete_attachment', attachment_id=attachment.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Tem certeza que deseja deletar este anexo?')">
+                                        <i class="fas fa-trash"></i> Deletar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
