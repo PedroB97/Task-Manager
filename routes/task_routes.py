@@ -73,3 +73,5 @@ def view_task(task_id):
     task = Task.query.get_or_404(task_id)
     return render_template("tasks/view.html", task=task)
 
+
+
