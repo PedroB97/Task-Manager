@@ -297,6 +297,42 @@ body.dark-mode .alert-info {
     border-color: #1d4ed8;
     color: #dbeafe;
 }
+/* Adicione estas regras ao final do seu arquivo CSS */
+
+/* Footer no modo escuro */
+body.dark-mode footer {
+    color: #f3f4f6 !important;
+}
+
+body.dark-mode .footer {
+    color: #f3f4f6 !important;
+}
+
+body.dark-mode .footer-text {
+    color: #f3f4f6 !important;
+}
+
+/* Texto geral no footer para modo escuro */
+body.dark-mode footer p,
+body.dark-mode footer span,
+body.dark-mode footer div {
+    color: #f3f4f6 !important;
+}
+
+/* Se o texto estiver em um container específico */
+body.dark-mode .container-fluid footer,
+body.dark-mode .container footer {
+    color: #f3f4f6 !important;
+}
+
+/* Para textos com classes específicas do Bootstrap */
+body.dark-mode .text-center {
+    color: #f3f4f6 !important;
+}
+
+body.dark-mode .text-muted {
+    color: #d1d5db !important;
+}
 
 /* Responsividade */
 @media (max-width: 768px) {
