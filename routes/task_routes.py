@@ -1,75 +1,237 @@
-# -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
-from __init__ import db
-from models.models import Project, Task, User  # Import User
-from forms import TaskForm  # Importar o novo TaskForm
+{% extends "base.html" %}
 
-# Definir o Blueprint para tarefas
-task_bp = Blueprint("task_bp", __name__, template_folder="../templates/tasks")
+{% block title %}{{ task.title }} - {% if task.project %}{{ task.project.name }}{% else %}Sem Projeto{% endif %}{% endblock %}
 
-# Rota para criar uma nova tarefa DENTRO de um projeto específico
-@task_bp.route("/projects/<int:project_id>/tasks/new", methods=["GET", "POST"])
-@login_required
-def create_task(project_id):
-    project = Project.query.get_or_404(project_id)
-    form = TaskForm()  # Usar o novo TaskForm
-    
-    # Se o formulário for válido ao submeter (POST)
-    if form.validate_on_submit():
-        task = Task(
-            title=form.title.data,
-            description=form.description.data,
-            status=form.status.data,
-            due_date=form.due_date.data,
-            project_id=project_id,
-            assigned_user_id=form.assigned_user.data.id if form.assigned_user.data else None
-        )
-        db.session.add(task)
-        db.session.commit()
-        flash("Tarefa criada com sucesso!", "success")
-        return redirect(url_for("project_bp.view_project", project_id=project_id))
-    
-    return render_template("tasks/new.html", form=form, project=project)
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tasks"></i> {{ task.title }}
+                    </h4>
+                    <small class="text-muted">Projeto: {% if task.project %}{{ task.project.name }}{% else %}N/A{% endif %}</small>
+                </div>
+                <div class="card-body">
+                    {% if task.description %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Descrição</h6>
+                        <p>{{ task.description }}</p>
+                    </div>
+                    {% endif %}
 
-# Rota para editar uma tarefa existente
-@task_bp.route("/tasks/<int:task_id>/edit", methods=["GET", "POST"])
-@login_required
-def edit_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    form = TaskForm(obj=task)  # Pré-preencher o formulário com dados da tarefa
-    
-    # Pré-selecionar o usuário atribuído se existir
-    if task.assigned_user_id:
-        form.assigned_user.data = User.query.get(task.assigned_user_id)
-    
-    if form.validate_on_submit():
-        task.title = form.title.data
-        task.description = form.description.data
-        task.status = form.status.data
-        task.due_date = form.due_date.data
-        task.assigned_user_id = form.assigned_user.data.id if form.assigned_user.data else None
-        db.session.commit()
-        flash("Tarefa atualizada com sucesso!", "success")
-        return redirect(url_for("project_bp.view_project", project_id=task.project_id))
-    
-    return render_template("tasks/edit.html", form=form, task=task)
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Status</h6>
+                            {% if task.status == 'a_fazer' %}
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-clock"></i> A Fazer
+                                </span>
+                            {% elif task.status == 'em_andamento' %}
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-play"></i> Em Andamento
+                                </span>
+                            {% elif task.status == 'finalizada' %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check"></i> Finalizada
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Responsável</h6>
+                            {% if task.assigned_user %}
+                                <p class="h6">
+                                    <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">
+                                    <i class="fas fa-user-slash"></i> Não atribuído
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
 
-# Rota para deletar uma tarefa
-@task_bp.route("/tasks/<int:task_id>/delete", methods=["POST"])
-@login_required
-def delete_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    project_id = task.project_id
-    db.session.delete(task)
-    db.session.commit()
-    flash("Tarefa deletada com sucesso!", "success")
-    return redirect(url_for("project_bp.view_project", project_id=project_id))
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Data de Criação</h6>
+                            <p class="h6">
+                                <i class="fas fa-calendar-plus"></i> 
+                                {% if task.created_at %}
+                                    {{ task.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                {% else %}
+                                    Não informado
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Prazo de Entrega</h6>
+                            {% if task.due_date %}
+                                <p class="h6">
+                                    <i class="fas fa-calendar-check"></i> 
+                                    {{ task.due_date.strftime('%d/%m/%Y') }}
+                                    {% set today = moment().date() %}
+                                    {% if task.due_date < today and task.status != 'finalizada' %}
+                                        <span class="badge bg-danger ms-2">Atrasada</span>
+                                    {% elif task.due_date == today and task.status != 'finalizada' %}
+                                        <span class="badge bg-warning ms-2">Vence Hoje</span>
+                                    {% endif %}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">
+                                    <i class="fas fa-calendar-times"></i> Sem prazo definido
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
 
-# Rota para visualizar uma tarefa específica
-@task_bp.route("/tasks/<int:task_id>")
-@login_required
-def view_task(task_id):
-    task = Task.query.get_or_404(task_id)
-    return render_template("tasks/view.html", task=task)
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">ID da Tarefa</h6>
+                            <p class="h6">#{{ task.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Anexos</h6>
+                            <p class="h6">
+                                <i class="fas fa-paperclip"></i> 
+                                {{ task.attachments|length }} arquivo(s)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Anexos -->
+            {% if task.attachments %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paperclip"></i> Anexos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="attachments-list">
+                        {% for attachment in task.attachments %}
+                        <div class="attachment-item">
+                            <div class="attachment-icon">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <div class="attachment-name">
+                                <strong>{{ attachment.filename }}</strong>
+                                {% if attachment.file_size %}
+                                    <small class="text-muted d-block">
+                                        Tamanho: {{ "%.2f"|format(attachment.file_size / 1024 / 1024) }} MB
+                                    </small>
+                                {% endif %}
+                            </div>
+                            <div class="attachment-actions">
+                                <a href="{{ url_for('attachment_bp.download_attachment', attachment_id=attachment.id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                {% if current_user.is_admin or current_user.id == task.assigned_user_id %}
+                                <form method="POST" 
+                                      action="{{ url_for('attachment_bp.delete_attachment', attachment_id=attachment.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Tem certeza que deseja deletar este anexo?')">
+                                        <i class="fas fa-trash"></i> Deletar
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Ações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if current_user.is_admin or current_user.id == task.assigned_user_id %}
+                        <a href="{{ url_for('task_bp.edit_task', task_id=task.id) }}" 
+                           class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Editar Tarefa
+                        </a>
+                        {% endif %}
+
+                        {% if task.project and task.project.id is defined and task.project.id is not none %}
+                        <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-project-diagram"></i> Ver Projeto
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.is_admin %}
+                        <hr>
+                        <form method="POST" action="{{ url_for('task_bp.delete_task', task_id=task.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.')">
+                                <i class="fas fa-trash"></i> Deletar Tarefa
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações do projeto -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> Projeto
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if task.project %}
+                        <h6>{{ task.project.name }}</h6>
+                        {% if task.project.description %}
+                            <p class="text-muted small">{{ task.project.description }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt"></i> Ver Projeto Completo
+                        </a>
+                    {% else %}
+                        <p class="text-muted">Esta tarefa não está associada a um projeto.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Progresso da tarefa -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Progresso
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if task.status == 'a_fazer' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-primary" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">0% - Não iniciada</small>
+                    {% elif task.status == 'em_andamento' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-warning" style="width: 50%"></div>
+                        </div>
+                        <small class="text-muted">50% - Em andamento</small>
+                    {% elif task.status == 'finalizada' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                        <small class="text-muted">100% - Concluída</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
