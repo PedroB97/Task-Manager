@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Usuário: {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user"></i> Detalhes do Usuário
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Nome de Usuário</h6>
+                            <p class="h5">{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Email</h6>
+                            <p class="h5">{{ user.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Tipo de Usuário</h6>
+                            {% if user.is_admin %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-user-shield"></i> Administrador
+                                </span>
+                            {% else %}
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-user"></i> Usuário Regular
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Status</h6>
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle"></i> Ativo
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">ID do Usuário</h6>
+                            <p class="h5">#{{ user.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Tarefas Atribuídas</h6>
+                            <p class="h5">{{ task_count }} tarefa(s)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Ações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('user_bp.edit_user', user_id=user.id) }}" 
+                           class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Editar Usuário
+                        </a>
+                        
+                        <a href="{{ url_for('user_bp.change_user_password', user_id=user.id) }}" 
+                           class="btn btn-info">
+                            <i class="fas fa-key"></i> Alterar Senha
+                        </a>
+
+                        {% if user.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('user_bp.toggle_admin', user_id=user.id) }}">
+                                <button type="submit" 
+                                        class="btn {% if user.is_admin %}btn-danger{% else %}btn-success{% endif %} w-100"
+                                        onclick="return confirm('Tem certeza que deseja {% if user.is_admin %}remover privilégios de administrador{% else %}promover a administrador{% endif %} o usuário {{ user.username }}?')">
+                                    {% if user.is_admin %}
+                                        <i class="fas fa-user-minus"></i> Remover Admin
+                                    {% else %}
+                                        <i class="fas fa-user-plus"></i> Promover a Admin
+                                    {% endif %}
+                                </button>
+                            </form>
+                        {% endif %}
+
+                        <hr>
+
+                        {% if user.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('user_bp.delete_user', user_id=user.id) }}">
+                                <button type="submit" class="btn btn-outline-danger w-100"
+                                        onclick="return confirm('Tem certeza que deseja deletar o usuário {{ user.username }}? Esta ação não pode ser desfeita.')">
+                                    <i class="fas fa-trash"></i> Deletar Usuário
+                                </button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-outline-secondary w-100" disabled>
+                                <i class="fas fa-ban"></i> Não é possível deletar sua própria conta
+                            </button>
+                        {% endif %}
+
+                        <a href="{{ url_for('user_bp.list_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Voltar à Lista
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if user.is_admin %}
+            <div class="card mt-3">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-exclamation-triangle"></i> Privilégios de Admin
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        Este usuário tem privilégios de administrador e pode:
+                        <ul class="mt-2 mb-0">
+                            <li>Gerenciar outros usuários</li>
+                            <li>Criar, editar e deletar usuários</li>
+                            <li>Promover/rebaixar usuários</li>
+                            <li>Acessar funcionalidades administrativas</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
