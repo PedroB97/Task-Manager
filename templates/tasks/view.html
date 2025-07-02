@@ -162,7 +162,7 @@
                         </a>
                         {% endif %}
 
-                        {% if task.project %}
+                        {% if task.project and task.project.id is defined and task.project.id is not none %}
                         <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
                            class="btn btn-primary">
                             <i class="fas fa-project-diagram"></i> Ver Projeto
@@ -235,3 +235,4 @@
     </div>
 </div>
 {% endblock %}
+
