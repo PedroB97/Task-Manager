@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ task.title }} - {{ task.project.name }}{% endblock %}
+{% block title %}{{ task.title }} - {% if task.project %}{{ task.project.name }}{% else %}Sem Projeto{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -11,7 +11,7 @@
                     <h4 class="mb-0">
                         <i class="fas fa-tasks"></i> {{ task.title }}
                     </h4>
-                    <small class="text-muted">Projeto: {{ task.project.name }}</small>
+                    <small class="text-muted">Projeto: {% if task.project %}{{ task.project.name }}{% else %}N/A{% endif %}</small>
                 </div>
                 <div class="card-body">
                     {% if task.description %}
@@ -162,10 +162,12 @@
                         </a>
                         {% endif %}
 
+                        {% if task.project %}
                         <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
                            class="btn btn-primary">
                             <i class="fas fa-project-diagram"></i> Ver Projeto
                         </a>
+                        {% endif %}
 
                         {% if current_user.is_admin %}
                         <hr>
@@ -188,14 +190,18 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <h6>{{ task.project.name }}</h6>
-                    {% if task.project.description %}
-                        <p class="text-muted small">{{ task.project.description }}</p>
+                    {% if task.project %}
+                        <h6>{{ task.project.name }}</h6>
+                        {% if task.project.description %}
+                            <p class="text-muted small">{{ task.project.description }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt"></i> Ver Projeto Completo
+                        </a>
+                    {% else %}
+                        <p class="text-muted">Esta tarefa não está associada a um projeto.</p>
                     {% endif %}
-                    <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
-                       class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-external-link-alt"></i> Ver Projeto Completo
-                    </a>
                 </div>
             </div>
 
@@ -229,4 +235,6 @@
     </div>
 </div>
 {% endblock %}
+
+
 
