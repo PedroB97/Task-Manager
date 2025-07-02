@@ -1,192 +1,232 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - {{ task.project.name }}{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1>Tarefa: {{ task.title }}</h1>
-        <p class="text-muted">
-            Status: 
-            {% if task.status == 'a_fazer' %}
-                <span class="badge bg-primary">A Fazer</span>
-            {% elif task.status == 'em_andamento' %}
-                <span class="badge bg-warning">Em Andamento</span>
-            {% elif task.status == 'finalizada' %}
-                <span class="badge bg-success">Finalizada</span>
-            {% endif %}
-            
-            {% if task.due_date %}
-                | Vencimento: {{ task.due_date.strftime('%d/%m/%Y') }}
-            {% endif %}
-        </p>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{{ url_for('project_bp.view_project', project_id=task.project_id) }}" class="btn btn-secondary">
-            Voltar para o Quadro
-        </a>
-    </div>
-</div>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tasks"></i> {{ task.title }}
+                    </h4>
+                    <small class="text-muted">Projeto: {{ task.project.name }}</small>
+                </div>
+                <div class="card-body">
+                    {% if task.description %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Descrição</h6>
+                        <p>{{ task.description }}</p>
+                    </div>
+                    {% endif %}
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                Detalhes da Tarefa
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Descrição</h5>
-                <p class="card-text">{{ task.description or 'Sem descrição' }}</p>
-                
-                <hr>
-                
-                <div class="d-flex justify-content-between">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal">
-                        Editar Tarefa
-                    </button>
-                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
-                        Excluir Tarefa
-                    </button>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Status</h6>
+                            {% if task.status == 'a_fazer' %}
+                                <span class="badge bg-primary fs-6">
+                                    <i class="fas fa-clock"></i> A Fazer
+                                </span>
+                            {% elif task.status == 'em_andamento' %}
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-play"></i> Em Andamento
+                                </span>
+                            {% elif task.status == 'finalizada' %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-check"></i> Finalizada
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Responsável</h6>
+                            {% if task.assigned_user %}
+                                <p class="h6">
+                                    <i class="fas fa-user"></i> {{ task.assigned_user.username }}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">
+                                    <i class="fas fa-user-slash"></i> Não atribuído
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Data de Criação</h6>
+                            <p class="h6">
+                                <i class="fas fa-calendar-plus"></i> 
+                                {% if task.created_at %}
+                                    {{ task.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                                {% else %}
+                                    Não informado
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Prazo de Entrega</h6>
+                            {% if task.due_date %}
+                                <p class="h6">
+                                    <i class="fas fa-calendar-check"></i> 
+                                    {{ task.due_date.strftime('%d/%m/%Y') }}
+                                    {% set today = moment().date() %}
+                                    {% if task.due_date < today and task.status != 'finalizada' %}
+                                        <span class="badge bg-danger ms-2">Atrasada</span>
+                                    {% elif task.due_date == today and task.status != 'finalizada' %}
+                                        <span class="badge bg-warning ms-2">Vence Hoje</span>
+                                    {% endif %}
+                                </p>
+                            {% else %}
+                                <p class="text-muted">
+                                    <i class="fas fa-calendar-times"></i> Sem prazo definido
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">ID da Tarefa</h6>
+                            <p class="h6">#{{ task.id }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Anexos</h6>
+                            <p class="h6">
+                                <i class="fas fa-paperclip"></i> 
+                                {{ task.attachments|length }} arquivo(s)
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-footer text-muted">
-                Criada em {{ task.created_at.strftime('%d/%m/%Y %H:%M') }}
-                {% if task.updated_at != task.created_at %}
-                    | Atualizada em {{ task.updated_at.strftime('%d/%m/%Y %H:%M') }}
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                Anexos
-            </div>
-            <div class="card-body">
-                <form action="{{ url_for('attachment_bp.upload_attachment', task_id=task.id) }}" method="post" enctype="multipart/form-data" class="mb-3">
-                    <div class="mb-3">
-                        <label for="attachment-file" class="form-label">Adicionar Anexo</label>
-                        <input class="form-control" type="file" id="attachment-file" name="file">
-                        <div id="file-preview"></div>
-                        <div class="form-text">Limite máximo: 10MB</div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Enviar Arquivo</button>
-                </form>
-                
-                <hr>
-                
-                <div class="attachments-list">
-                    {% if task.attachments %}
+
+            <!-- Anexos -->
+            {% if task.attachments %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paperclip"></i> Anexos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="attachments-list">
                         {% for attachment in task.attachments %}
-                            <div class="attachment-item">
-                                <div class="attachment-icon">
-                                    <i class="bi bi-file-earmark"></i>
-                                </div>
-                                <div class="attachment-name">
-                                    {{ attachment.original_filename }}
-                                    <br>
-                                    <small class="text-muted">{{ (attachment.file_size / 1024)|round(1) }} KB</small>
-                                </div>
-                                <div class="attachment-actions">
-                                    <a href="{{ url_for('attachment_bp.download_attachment', attachment_id=attachment.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-download"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAttachment{{ attachment.id }}Modal">
-                                        <i class="bi bi-trash"></i>
+                        <div class="attachment-item">
+                            <div class="attachment-icon">
+                                <i class="fas fa-file"></i>
+                            </div>
+                            <div class="attachment-name">
+                                <strong>{{ attachment.filename }}</strong>
+                                {% if attachment.file_size %}
+                                    <small class="text-muted d-block">
+                                        Tamanho: {{ "%.2f"|format(attachment.file_size / 1024 / 1024) }} MB
+                                    </small>
+                                {% endif %}
+                            </div>
+                            <div class="attachment-actions">
+                                <a href="{{ url_for('attachment_bp.download_attachment', attachment_id=attachment.id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                {% if current_user.is_admin or current_user.id == task.assigned_user_id %}
+                                <form method="POST" 
+                                      action="{{ url_for('attachment_bp.delete_attachment', attachment_id=attachment.id) }}" 
+                                      style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Tem certeza que deseja deletar este anexo?')">
+                                        <i class="fas fa-trash"></i> Deletar
                                     </button>
-                                </div>
+                                </form>
+                                {% endif %}
                             </div>
-                            
-                            <!-- Modal para excluir anexo -->
-                            <div class="modal fade" id="deleteAttachment{{ attachment.id }}Modal" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Confirmar Exclusão</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Tem certeza que deseja excluir o anexo <strong>{{ attachment.original_filename }}</strong>?</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <form action="{{ url_for('attachment_bp.delete_attachment', attachment_id=attachment.id) }}" method="post">
-                                                <button type="submit" class="btn btn-danger">Excluir</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        </div>
                         {% endfor %}
-                    {% else %}
-                        <p class="text-muted">Nenhum anexo disponível</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Ações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if current_user.is_admin or current_user.id == task.assigned_user_id %}
+                        <a href="{{ url_for('task_bp.edit_task', task_id=task.id) }}" 
+                           class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Editar Tarefa
+                        </a>
+                        {% endif %}
+
+                        <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-project-diagram"></i> Ver Projeto
+                        </a>
+
+                        {% if current_user.is_admin %}
+                        <hr>
+                        <form method="POST" action="{{ url_for('task_bp.delete_task', task_id=task.id) }}">
+                            <button type="submit" class="btn btn-outline-danger w-100"
+                                    onclick="return confirm('Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.')">
+                                <i class="fas fa-trash"></i> Deletar Tarefa
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações do projeto -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> Projeto
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6>{{ task.project.name }}</h6>
+                    {% if task.project.description %}
+                        <p class="text-muted small">{{ task.project.description }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('project_bp.view_project', project_id=task.project.id) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> Ver Projeto Completo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Progresso da tarefa -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line"></i> Progresso
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if task.status == 'a_fazer' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-primary" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted">0% - Não iniciada</small>
+                    {% elif task.status == 'em_andamento' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-warning" style="width: 50%"></div>
+                        </div>
+                        <small class="text-muted">50% - Em andamento</small>
+                    {% elif task.status == 'finalizada' %}
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                        <small class="text-muted">100% - Concluída</small>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Modal para Editar Tarefa -->
-<div class="modal fade task-modal" id="editTaskModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Editar Tarefa</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="{{ url_for('task_bp.edit_task', task_id=task.id) }}" method="post">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Título</label>
-                        <input type="text" class="form-control" id="title" name="title" value="{{ task.title }}" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Descrição</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ task.description }}</textarea>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="due_date" class="form-label">Data de Vencimento</label>
-                        <input type="date" class="form-control" id="due_date" name="due_date" 
-                               value="{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Excluir Tarefa -->
-<div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmar Exclusão</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Tem certeza que deseja excluir a tarefa <strong>{{ task.title }}</strong>?</p>
-                <p class="text-danger">Esta ação não pode ser desfeita e todos os anexos associados serão excluídos.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form action="{{ url_for('task_bp.delete_task', task_id=task.id) }}" method="post">
-                    <button type="submit" class="btn btn-danger">Excluir</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-    // Adicionar ícones Bootstrap
-    document.head.innerHTML += '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">';
-</script>
-{% endblock %}
