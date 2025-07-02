@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Tarefa - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle"></i> Nova Tarefa
+                    </h4>
+                    <small class="text-muted">Projeto: {{ project.name }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }}
+                                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                                    {% if form.title.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.title.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.status.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="4") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle"></i> 
+                                Descreva detalhadamente o que precisa ser feito nesta tarefa.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.due_date.label(class="form-label") }}
+                                    {{ form.due_date(class="form-control" + (" is-invalid" if form.due_date.errors else "")) }}
+                                    {% if form.due_date.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.due_date.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.assigned_user.label(class="form-label") }}
+                                    {{ form.assigned_user(class="form-select" + (" is-invalid" if form.assigned_user.errors else "")) }}
+                                    {% if form.assigned_user.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.assigned_user.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.attachment.label(class="form-label") }}
+                            {{ form.attachment(class="form-control" + (" is-invalid" if form.attachment.errors else "")) }}
+                            {% if form.attachment.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.attachment.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-paperclip"></i> 
+                                Anexe arquivos relevantes para esta tarefa (opcional).
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{{ url_for('project_bp.view_project', project_id=project.id) }}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Voltar ao Projeto
+                                </a>
+                            </div>
+                            <div>
+                                <button type="reset" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-undo"></i> Limpar
+                                </button>
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informações do projeto -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> Informações do Projeto
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Nome:</strong> {{ project.name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>ID:</strong> #{{ project.id }}
+                        </div>
+                    </div>
+                    {% if project.description %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <strong>Descrição:</strong> {{ project.description }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Dicas para criação de tarefas -->
+            <div class="card mt-3">
+                <div class="card-header bg-info">
+                    <h6 class="mb-0 text-white">
+                        <i class="fas fa-lightbulb"></i> Dicas para uma boa tarefa
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <ul class="mb-0">
+                            <li><strong>Título claro:</strong> Use um título descritivo e específico</li>
+                            <li><strong>Descrição detalhada:</strong> Explique o que precisa ser feito</li>
+                            <li><strong>Prazo realista:</strong> Defina uma data de entrega viável</li>
+                            <li><strong>Responsável adequado:</strong> Atribua a pessoa certa para a tarefa</li>
+                            <li><strong>Status inicial:</strong> Escolha o status apropriado para começar</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configurar data mínima para hoje
+document.addEventListener('DOMContentLoaded', function() {
+    const dueDateInput = document.getElementById('due_date');
+    if (dueDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dueDateInput.setAttribute('min', today);
+    }
+});
+</script>
+{% endblock %}
+
