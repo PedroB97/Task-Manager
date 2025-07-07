@@ -9,7 +9,7 @@ from forms import TaskForm  # Importar o novo TaskForm
 task_bp = Blueprint("task_bp", __name__, template_folder="../templates/tasks")
 
 # Rota para criar uma nova tarefa DENTRO de um projeto específico
-@task_bp.route("/projects/<int:project_id>/tasks/new", methods=["GET", "POST"])
+@task_bp.route("/projects/<int:project_id>/tasks/new.html", methods=["GET", "POST"])
 @login_required
 def create_task(project_id):
     project = Project.query.get_or_404(project_id)
